@@ -19,4 +19,4 @@ If possible, CI/CD as well
 TODO: add instructions on how to compile executable from source code.
 
 # Credits
-Conceptualized and developed by: [Stuart Clayton](https://github.com/sclayton33), [admizener](https://github.com/admizener)
+Conceptualized and developed by: [Stuart Clayton](https://github.com/sclayton33), [admizener](https://github.com/admizener), [Lauren Rentz]()
