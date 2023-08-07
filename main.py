@@ -4,11 +4,11 @@
 
 from pathlib import Path
 from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage
-from clams_processing import clean_all_clams_data, trim_all_clams_data, process_directory
+from clams_processing import clean_all_clams_data, trim_all_clams_data, process_directory, extract_id_number, split_csv_files
 
 
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"/home/user/build/assets/frame0")
+ASSETS_PATH = OUTPUT_PATH / Path(r"./assets/frame0")
 
 
 def relative_to_assets(path: str) -> Path:
@@ -41,6 +41,9 @@ def main_process_clams_data():
 
     output_text.insert("end", "\nBinning all trimmed CLAMS data...\n")
     process_directory(directory_path, bin_hours)
+
+    output_text.insert("end", "\nCombining all binned CLAMS data...\n")
+    split_csv_files(directory_path)
 
     output_text.insert("end", "\nAll CLAMS files processed successfully!")
 

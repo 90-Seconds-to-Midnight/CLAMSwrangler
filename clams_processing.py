@@ -2,6 +2,7 @@ import pandas as pd
 import os
 import glob
 import numpy as np
+import re
 from datetime import datetime, timedelta
 
 
@@ -209,3 +210,52 @@ def process_directory(directory_path, bin_hours):
         file_path = os.path.join(trimmed_directory, csv_file)
         bin_clams_data(file_path, bin_hours)
         print(f"Processed {csv_file}")
+
+
+def extract_id_number(filename):
+    # Extract the four digits following 'ID' in the filename
+    match = re.search(r'ID(\d{4})', filename)
+    if match:
+        return match.group(1)
+    else:
+        return None
+
+
+def split_csv_files(directory_path):
+    # Define Combined CLAMS data directory
+    combined_directory = os.path.join(directory_path, "Combined_CLAMS_data")
+    if not os.path.exists(combined_directory):
+        os.makedirs(combined_directory)
+
+    # Define input directory
+    input_directory = os.path.join(directory_path, "Binned_CLAMS_data")
+
+    # Create a dictionary to store data for each selected column
+    column_data = {}
+
+    # Selected columns to combine
+    selected_columns = ['VO2', 'ACCO2', 'VCO2', 'ACCCO2', 'RER', 'FEED1', 'FEED1 ACC', 'TOT_AMB', 'WHEEL', 'WHEEL ACC']
+
+    # Loop through all files in the specified directory
+    for filename in os.listdir(input_directory):
+        if filename.endswith(".CSV"):
+            file_path = os.path.join(input_directory, filename)
+            # Get the 'ID' number from the file name
+            file_id = extract_id_number(filename)
+
+            # Read the current .csv file into a DataFrame
+            df = pd.read_csv(file_path)
+
+            # Process each selected column and store it in the dictionary
+            for column in selected_columns:
+                if column in df.columns:
+                    if column not in column_data:
+                        column_data[column] = pd.DataFrame()
+                    # Rename the column with the 'ID' number
+                    df.rename(columns={column: f'{column} (ID{file_id})'}, inplace=True)
+                    column_data[column] = pd.concat([column_data[column], df[[f'{column} (ID{file_id})']]], axis=1)
+
+    # Save each selected column's data to a separate .csv file
+    for column, df in column_data.items():
+        output_filename = os.path.join(combined_directory, f"{column}.csv")
+        df.to_csv(output_filename, index=False)
