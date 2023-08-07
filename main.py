@@ -150,9 +150,9 @@ entry_3.place(
 )
 
 canvas.create_text(
-    174.0,
-    10.0,
-    anchor="nw",
+    400.0,
+    20.0,
+    anchor="center",
     text="CLAMSwrangler",
     fill="#FFFFFF",
     font=("LeagueSpartan Regular", 48 * -1)
