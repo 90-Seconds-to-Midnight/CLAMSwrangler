@@ -4,7 +4,7 @@
 
 from pathlib import Path
 from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage
-from clams_processing import clean_all_clams_data, trim_all_clams_data, process_directory, extract_id_number, split_csv_files
+from clams_processing import clean_all_clams_data, trim_all_clams_data, process_directory, split_csv_files
 
 
 OUTPUT_PATH = Path(__file__).parent
