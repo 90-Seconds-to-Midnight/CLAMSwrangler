@@ -35,13 +35,15 @@ def clean_all_clams_data(directory_path):
         df.drop([0, 1], inplace=True)
 
         # Construct the new file name
-        base_name, ext = os.path.splitext(os.path.basename(file_path))
+        file_name = os.path.basename(file_path)
+        base_name, ext = os.path.splitext(file_name)
+        ext = ext.lower()
         new_file_name = f"{base_name}_ID{subject_id}{ext}"
 
         # Save the cleaned data to the new directory
         output_path = os.path.join(output_directory, new_file_name)
         df.to_csv(output_path, index=False)
-        print(f"Cleaned CLAMS data saved to {output_path}")
+        print(f"Cleaning {file_name}")
 
     # Create the output directory if it doesn't exist
     output_directory = os.path.join(directory_path, "Cleaned_CLAMS_data")
@@ -49,7 +51,7 @@ def clean_all_clams_data(directory_path):
         os.makedirs(output_directory)
 
     # Process all CSV files in the directory
-    all_files = glob.glob(os.path.join(directory_path, "*.CSV"))
+    all_files = glob.glob(os.path.join(directory_path, "*.csv"))
     for file_path in all_files:
         clean_file(file_path, output_directory)
 
@@ -76,7 +78,7 @@ def trim_all_clams_data(directory_path, trim_hours, keep_hours):
 
     # List all files in the directory
     files = [f for f in os.listdir(cleaned_directory) if
-             os.path.isfile(os.path.join(cleaned_directory, f)) and f.endswith('.CSV')]
+             os.path.isfile(os.path.join(cleaned_directory, f)) and f.endswith('.csv')]
 
     for file in files:
         file_path = os.path.join(cleaned_directory, file)
@@ -107,10 +109,12 @@ def trim_all_clams_data(directory_path, trim_hours, keep_hours):
             (df['DATE/TIME'] >= df['DATE/TIME'].iloc[led_lightness_change_index]) & (df['DATE/TIME'] <= end_time)]
 
         # Save the resulting data to a new CSV file in the "Trimmed_CLAMS_data" directory
+        file_name = os.path.basename(file_path)
         base_name, ext = os.path.splitext(file)
+        ext = ext.lower()
         new_file_name = os.path.join(trimmed_directory, f"{base_name}_trimmed{ext}")
         df_result.to_csv(new_file_name, index=False)
-        print(f"Trimmed data saved to {new_file_name}")
+        print(f"Trimming {file_name}")
 
 
 def bin_clams_data(file_path, bin_hours):
@@ -187,7 +191,7 @@ def bin_clams_data(file_path, bin_hours):
     df_binned = df_binned.round(4)
 
     # Save the binned data to a new CSV file
-    output_path = file_path.replace("Trimmed_CLAMS_data", "Binned_CLAMS_data").replace(".CSV", "_binned.CSV")
+    output_path = file_path.replace("Trimmed_CLAMS_data", "Binned_CLAMS_data").replace(".csv", "_binned.csv")
 
     # Check if the directory exists, if not, create it
     output_directory = os.path.dirname(output_path)
@@ -203,13 +207,13 @@ def process_directory(directory_path, bin_hours):
 
     # Get a list of all .CSV files in the directory
     csv_files = [f for f in os.listdir(trimmed_directory) if
-                 f.endswith('.CSV') and os.path.isfile(os.path.join(trimmed_directory, f))]
+                 f.endswith('.csv') and os.path.isfile(os.path.join(trimmed_directory, f))]
 
     # Process each .CSV file
     for csv_file in csv_files:
         file_path = os.path.join(trimmed_directory, csv_file)
         bin_clams_data(file_path, bin_hours)
-        print(f"Processed {csv_file}")
+        print(f"Binning {csv_file}")
 
 
 def extract_id_number(filename):
@@ -238,7 +242,7 @@ def split_csv_files(directory_path):
 
     # Loop through all files in the specified directory
     for filename in os.listdir(input_directory):
-        if filename.endswith(".CSV"):
+        if filename.endswith(".csv"):
             file_path = os.path.join(input_directory, filename)
             # Get the 'ID' number from the file name
             file_id = extract_id_number(filename)
