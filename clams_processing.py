@@ -185,12 +185,19 @@ def bin_clams_data(file_path, bin_hours):
     df_binned = df_binned.sort_values(by='INTERVAL_start')
 
     # Add a DAY column
-    df_binned['DAY'] = df_binned['BIN'] // (12 / bin_hours) + 1
+    df_binned['DAY'] = (df_binned['BIN'] // (12 / bin_hours) + 1).astype(int)
+
+    # Reset index and add a new 'BIN' column starting from 1
+    df_binned.reset_index(drop=True, inplace=True)
+    df_binned['BIN'] = df_binned.index
+
+    # Add DAILY_BIN column
+    df_binned['DAILY_BIN'] = df_binned['BIN'] % ( 24 // bin_hours)
 
     # Reorder columns based on your request
     desired_order = ["CHAN", "INTERVAL_start", "INTERVAL_end", "DATE/TIME_start", "DATE/TIME_end", "DURATION",
                      "VO2", "ACCO2", "VCO2", "ACCCO2", "RER", "HEAT", "FLOW", "PRESSURE", "FEED1", "FEED1 ACC",
-                     "TOT_AMB", "WHEEL", "WHEEL ACC", "ENCLOSURE TEMP", "ENCLOSURE SETPOINT", "LED LIGHTNESS", "BIN", "DAY"]
+                     "TOT_AMB", "WHEEL", "WHEEL ACC", "ENCLOSURE TEMP", "ENCLOSURE SETPOINT", "LED LIGHTNESS", "DAY", "BIN", "DAILY_BIN"]
     df_binned = df_binned[desired_order]
 
     # Round all variables to 4 decimal places
