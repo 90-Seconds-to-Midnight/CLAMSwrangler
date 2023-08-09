@@ -181,6 +181,9 @@ def bin_clams_data(file_path, bin_hours):
     # Calculate the duration of each bin in hours
     df_binned['DURATION'] = (df_binned['DATE/TIME_end'] - df_binned['DATE/TIME_start']).dt.total_seconds() / 3600
 
+    # Drop rows with a duration of 0
+    df_binned = df_binned[df_binned['DURATION'] != 0]
+
     # Drop existing BIN column & sort based on INTERVAL_start
     df_binned = df_binned.sort_values(by='INTERVAL_start')
 
