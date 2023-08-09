@@ -272,7 +272,13 @@ def split_csv_files(directory_path):
                     df.rename(columns={column: f'{column} (ID{file_id})'}, inplace=True)
                     column_data[column] = pd.concat([column_data[column], df[[f'{column} (ID{file_id})']]], axis=1)
 
-    # Save each selected column's data to a separate .csv file
-    for column, df in column_data.items():
-        output_filename = os.path.join(combined_directory, f"{column}.csv")
-        df.to_csv(output_filename, index=False)
+        # Transpose the data before saving to separate .csv files
+        for column, df in column_data.items():
+            # Transpose the DataFrame using .T
+            transposed_df = df.T
+
+            # Format the index to include content within parentheses
+            transposed_df.index = [idx[3:].split("(")[1].split(")")[0].strip() for idx in transposed_df.index]
+
+            output_filename = os.path.join(combined_directory, f"{column}.csv")
+            transposed_df.to_csv(output_filename, index=True, header=False)  # Index is used as header
