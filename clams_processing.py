@@ -50,10 +50,13 @@ def clean_all_clams_data(directory_path):
     if not os.path.exists(output_directory):
         os.makedirs(output_directory)
 
-    # Process all CSV files in the directory
-    all_files = glob.glob(os.path.join(directory_path, "*.csv"))
-    for file_path in all_files:
-        clean_file(file_path, output_directory)
+        # Process all CSV files in the directory (case-insensitive)
+        csv_pattern = re.compile(r"\.csv$", re.IGNORECASE)
+        all_files = glob.iglob(os.path.join(directory_path, "*"))
+        csv_files = [file_path for file_path in all_files if csv_pattern.search(file_path)]
+
+        for file_path in csv_files:
+            clean_file(file_path, output_directory)
 
 
 def trim_all_clams_data(directory_path, trim_hours, keep_hours):
