@@ -190,17 +190,21 @@ def bin_clams_data(file_path, bin_hours):
     # Add a DAY column
     df_binned['DAY'] = (df_binned['BIN'] // (12 / bin_hours) + 1).astype(int)
 
-    # Reset index and add a new 'BIN' column starting from 1
+    # Reset index and add a new 'HOUR' column starting from 1
     df_binned.reset_index(drop=True, inplace=True)
-    df_binned['BIN'] = df_binned.index
+    df_binned['HOUR'] = df_binned.index
 
     # Add DAILY_BIN column
-    df_binned['DAILY_BIN'] = df_binned['BIN'] % ( 24 // bin_hours)
+    df_binned['24 HOUR'] = df_binned['HOUR'] % ( 24 // bin_hours)
+
+    # Convert HOUR & 24 HOUR columns to time
+    df_binned['HOUR'] = (df_binned['HOUR'] + 1) * bin_hours
+    df_binned['24 HOUR'] = (df_binned['24 HOUR'] + 1) * bin_hours
 
     # Reorder columns based on your request
     desired_order = ["CHAN", "INTERVAL_start", "INTERVAL_end", "DATE/TIME_start", "DATE/TIME_end", "DURATION",
                      "VO2", "ACCO2", "VCO2", "ACCCO2", "RER", "HEAT", "FLOW", "PRESSURE", "FEED1", "FEED1 ACC",
-                     "TOT_AMB", "WHEEL", "WHEEL ACC", "ENCLOSURE TEMP", "ENCLOSURE SETPOINT", "LED LIGHTNESS", "DAY", "BIN", "DAILY_BIN"]
+                     "TOT_AMB", "WHEEL", "WHEEL ACC", "ENCLOSURE TEMP", "ENCLOSURE SETPOINT", "LED LIGHTNESS", "DAY", "HOUR", "24 HOUR"]
     df_binned = df_binned[desired_order]
 
     # Round all variables to 4 decimal places
@@ -271,7 +275,50 @@ def split_csv_files(directory_path):
                 if column in df.columns:
                     if column not in column_data:
                         column_data[column] = pd.DataFrame()
-                    # Rename the column with the 'ID' number
+                    # Rename the column with the 'ID' numberdef split_csv_files(directory_path):
+                    #     # Define Combined CLAMS data directory
+                    #     combined_directory = os.path.join(directory_path, "Combined_CLAMS_data")
+                    #     if not os.path.exists(combined_directory):
+                    #         os.makedirs(combined_directory)
+                    #
+                    #     # Define input directory
+                    #     input_directory = os.path.join(directory_path, "Binned_CLAMS_data")
+                    #
+                    #     # Create a dictionary to store data for each selected column
+                    #     column_data = {}
+                    #
+                    #     # Selected columns to combine
+                    #     selected_columns = ['VO2', 'ACCO2', 'VCO2', 'ACCCO2', 'RER', 'FEED1', 'FEED1 ACC', 'TOT_AMB', 'WHEEL', 'WHEEL ACC']
+                    #
+                    #     # Loop through all files in the specified directory
+                    #     for filename in os.listdir(input_directory):
+                    #         if filename.endswith(".csv"):
+                    #             file_path = os.path.join(input_directory, filename)
+                    #             # Get the 'ID' number from the file name
+                    #             file_id = extract_id_number(filename)
+                    #
+                    #             # Read the current .csv file into a DataFrame
+                    #             df = pd.read_csv(file_path)
+                    #
+                    #             # Process each selected column and store it in the dictionary
+                    #             for column in selected_columns:
+                    #                 if column in df.columns:
+                    #                     if column not in column_data:
+                    #                         column_data[column] = pd.DataFrame()
+                    #                     # Rename the column with the 'ID' number
+                    #                     df.rename(columns={column: f'{column} (ID{file_id})'}, inplace=True)
+                    #                     column_data[column] = pd.concat([column_data[column], df[[f'{column} (ID{file_id})']]], axis=1)
+                    #
+                    #         # Transpose the data before saving to separate .csv files
+                    #         for column, df in column_data.items():
+                    #             # Transpose the DataFrame using .T
+                    #             transposed_df = df.T
+                    #
+                    #             # Format the index to include content within parentheses
+                    #             transposed_df.index = [idx[3:].split("(")[1].split(")")[0].strip() for idx in transposed_df.index]
+                    #
+                    #             output_filename = os.path.join(combined_directory, f"{column}.csv")
+                    #             transposed_df.to_csv(output_filename, index=True, header=False)  # Index is used as header
                     df.rename(columns={column: f'{column} (ID{file_id})'}, inplace=True)
                     column_data[column] = pd.concat([column_data[column], df[[f'{column} (ID{file_id})']]], axis=1)
 
