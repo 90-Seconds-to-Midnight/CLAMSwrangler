@@ -3,6 +3,12 @@ from tkinter import filedialog, font
 import sys
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
+import os
+import pandas as pd
+from datetime import datetime
+import time
+from shutil import move
+from clams_processing import clean_all_clams_data, trim_all_clams_data, process_directory, recombine_columns
 
 
 class StdoutRedirect:
@@ -19,15 +25,109 @@ class StdoutRedirect:
         self._stdout.flush()
 
 
-from clams_processing import clean_all_clams_data, trim_all_clams_data, process_directory, recombine_columns
-
-
-def browse_directory():
+def browse_working_directory():
     """Opens dialog window to select file path.
     """
     folder_selected = filedialog.askdirectory()
     directory_path_entry.delete(0, tk.END)
     directory_path_entry.insert(0, folder_selected)
+
+
+def initialize_experiment_config_file(directory_path):
+    # Create a folder for the config file
+    config_file_path = os.path.join(directory_path, 'config')
+    os.makedirs(config_file_path, exist_ok=True)
+
+    # Path to the experiment configuration file
+    config_file = os.path.join(config_file_path, 'experiment_config.csv')
+
+    with open(config_file, 'w') as file:
+        file.write("ID,GROUP LABEL\n")
+
+
+def save_configuration(id_value, group_label_value, directory_path):
+    # Check if the experiment configuration file exists
+    experiment_config_file = os.path.join(directory_path, 'config/experiment_config.csv')
+    if not os.path.exists(experiment_config_file):
+        # Initialize a new experiment configuration file
+        initialize_experiment_config_file(directory_path)
+
+    # Path to the experiment configuration file
+    config_file = os.path.join(directory_path, 'config', 'experiment_config.csv')
+
+    # Write the ID and GROUP LABEL to the config file
+    with open(config_file, 'a') as file:
+        file.write(f"{id_value},{group_label_value}\n")
+
+    # Display confirmation message in output_text
+    confirmation_message = f"Configuration saved: ID = {id_value}, Group Label = {group_label_value}"
+    output_text.insert(tk.END, confirmation_message + "\n")
+    output_text.see(tk.END)  # Scroll to the end
+
+    # Clear the entry boxes
+    entry_id.delete(0, tk.END)
+    entry_group_label.delete(0, tk.END)
+
+
+def browse_config_file():
+    """Opens dialog window to select a prebuilt config file and copy it to the config directory.
+    """
+    directory_path = directory_path_entry.get()
+    # Check if the experiment configuration file exists
+    experiment_config_file = os.path.join(directory_path, 'config/experiment_config.csv')
+    if not os.path.exists(experiment_config_file):
+        # Initialize a new experiment configuration file
+        initialize_experiment_config_file(directory_path)
+
+    selected_file = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")])
+    if selected_file:
+        experiment_config_file = selected_file  # Update the global variable
+        # Display the selected file in the entry widget
+        config_file_entry.delete(0, tk.END)
+        config_file_entry.insert(0, experiment_config_file)
+
+        # Check the format of the experiment configuration file
+        try:
+            config_df = pd.read_csv(experiment_config_file)
+            expected_columns = ["ID", "GROUP LABEL"]
+            if not all(col in config_df.columns for col in expected_columns):
+                raise ValueError(
+                    "The experiment configuration file does not have the expected columns: ID, GROUP LABEL")
+
+            # Copy the selected file to the config directory
+            config_directory = os.path.join(directory_path, 'config')
+            config_file_dest = os.path.join(config_directory, 'experiment_config.csv')
+            # We'll use pandas to copy the file while preserving the format
+            config_df.to_csv(config_file_dest, index=False, columns=expected_columns)
+            output_text.insert(tk.END, "Experiment configuration file copied to the config directory.\n")
+        except pd.errors.EmptyDataError:
+            # Handle the case where the file is empty
+            output_text.insert(tk.END, "Error: Experiment configuration file is empty\n")
+        except (pd.errors.ParserError, ValueError) as e:
+            # Handle parsing errors or format mismatch
+            output_text.insert(tk.END, f"Error: Invalid format in experiment configuration file: {str(e)}\n")
+
+
+def log_user_input_and_output(input_values, output_text_content):
+    """Log user input values and output text to a log file.
+
+    Parameters:
+    input_values (dict): Dictionary containing user input values.
+    output_text_content (str): Content of the output_text widget.
+    """
+    # Create a timestamp for the log file
+    timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
+    log_file_path = os.path.join(directory_path_entry.get(), 'config', f'log_{timestamp}.txt')
+
+    with open(log_file_path, 'w') as log_file:
+        # Write user input values to the log file
+        log_file.write("User Input Values:\n")
+        for key, value in input_values.items():
+            log_file.write(f"{key}: {value}\n")
+
+        # Write output_text content to the log file
+        log_file.write("\nOutput Text:\n")
+        log_file.write(output_text_content)
 
 
 def main_process_clams_data():
@@ -51,7 +151,29 @@ def main_process_clams_data():
     original_stdout = sys.stdout
     sys.stdout = StdoutRedirect(output_text)
 
-    output_text.insert("end", "Cleaning all CLAMS data...\n")
+    # Check if the experiment configuration file exists
+    experiment_config_file = os.path.join(directory_path, 'config/experiment_config.csv')
+    if not os.path.exists(experiment_config_file):
+        # Initialize a new experiment configuration file
+        initialize_experiment_config_file(directory_path)
+
+        # Check if the user provided a config file to be copied
+        selected_config_file = config_file_entry.get()
+        if selected_config_file and os.path.exists(selected_config_file):
+            try:
+                # Read the selected config file
+                config_df = pd.read_csv(selected_config_file)
+                expected_columns = ["ID", "GROUP LABEL"]
+                if all(col in config_df.columns for col in expected_columns):
+                    # Copy the selected config file to the new experiment configuration file
+                    config_directory = os.path.join(directory_path, 'config')
+                    config_file_dest = os.path.join(config_directory, 'experiment_config.csv')
+                    config_df.to_csv(config_file_dest, index=False, columns=expected_columns)
+            except (pd.errors.EmptyDataError, pd.errors.ParserError, ValueError) as e:
+                # Handle errors while reading/copying the selected config file
+                output_text.insert(tk.END, f"Error copying config file: {str(e)}\n")
+
+    output_text.insert("end", "\nCleaning all CLAMS data...\n")
     clean_all_clams_data(directory_path)
 
     output_text.insert("end", "\nTrimming all cleaned CLAMS data...\n")
@@ -60,13 +182,40 @@ def main_process_clams_data():
     output_text.insert("end", "\nBinning all trimmed CLAMS data...\n")
     process_directory(directory_path, bin_hours)
 
+    # Path to experiment config file
+    experiment_config_file = os.path.join(directory_path, 'config/experiment_config.csv')
+
     output_text.insert("end", "\nCombining all binned CLAMS data...\n")
-    recombine_columns(directory_path)
+    recombine_columns(directory_path, experiment_config_file)
 
     output_text.insert("end", "\nAll CLAMS files processed successfully!")
 
     # Restore the original stdout
     sys.stdout = original_stdout
+
+    # Log user input values and output text
+    input_values = {
+        "Directory Path": directory_path_entry.get(),
+        "Trim Hours": trim_hours_entry.get(),
+        "Keep Hours": keep_hours_entry.get(),
+        "Bin Hours": bin_hours_entry.get(),
+        "Config File": config_file_entry.get(),
+    }
+    output_text_content = output_text.get("1.0", tk.END)
+    log_user_input_and_output(input_values, output_text_content)
+
+    # Create a timestamped directory within the working directory
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    timestamped_dir = os.path.join(directory_path, f'timestamp_{timestamp}')
+    os.makedirs(timestamped_dir, exist_ok=True)
+
+    # Move the relevant folders to the timestamped directory
+    folders_to_move = ['Binned_CLAMS_data', 'Cleaned_CLAMS_data', 'Combined_CLAMS_data', 'config', 'Trimmed_CLAMS_data']
+    for folder in folders_to_move:
+        source_folder = os.path.join(directory_path, folder)
+        destination_folder = os.path.join(timestamped_dir, folder)
+        move(source_folder, destination_folder)
+
 
 # Create the main window
 root = ttk.Window(themename="superhero")
@@ -102,38 +251,60 @@ instructions_text.pack()
 instructions_text.insert(tk.END,
                          "Instructions:\n\n1. Enter the path to the directory containing all of the .CSV CLAMS data files you wish to process.\n2. Enter the number of hours you wish to trim from the beginning of the data.\n\tRecommend at least 24 hours. \n3. Enter the number of hours of data you wish to keep of CLAMS data to be used downstream.\n4. Enter the size of the bin in hours.\n\tMust be a factor of 12.\n5. Click “Process CLAMS data”.\n\nCongratulations! You saved hours of menial labor! :D\n\n")  # Add your instructions here
 
+# Defines frame for user input
 input_frame = ttk.Frame(main_frame)
 input_frame.grid(row=0, column=1, padx=10, pady=10)
 
-path_frame = ttk.Frame(input_frame)
-path_frame.pack(pady=5)
-directory_path_label = ttk.Label(path_frame, text="Directory Path:")
-directory_path_label.grid(row=0, column=0, sticky=tk.W, padx=2)
-directory_path_entry = ttk.Entry(path_frame, width=50)
-directory_path_entry.grid(row=0, column=1, padx=2)
-browse_button = ttk.Button(path_frame, text="Browse", command=browse_directory)
-browse_button.grid(row=0, column=2, padx=2)
+directory_path_label = ttk.Label(input_frame, text="Directory Path:")
+directory_path_label.grid(row=0, column=0, sticky=W, padx=2, pady=2)
+browse_button = ttk.Button(input_frame, text="Browse", command=browse_working_directory)
+browse_button.grid(row=0, column=2, sticky=E, padx=2, pady=2)
+directory_path_entry = ttk.Entry(input_frame, width=50)
+directory_path_entry.grid(row=0, column=1, sticky=E, padx=2, pady=2)
 
-trim_hours_frame = ttk.Frame(input_frame)
-trim_hours_frame.pack(pady=5)
-trim_hours_label = ttk.Label(trim_hours_frame, text="Trim Hours:")
-trim_hours_label.grid(row=0, column=0, sticky=tk.W, padx=2)
-trim_hours_entry = ttk.Entry(trim_hours_frame, width=50)
-trim_hours_entry.grid(row=0, column=1, padx=2)
+trim_hours_label = ttk.Label(input_frame, text="Trim Hours:")
+trim_hours_label.grid(row=1, column=0, sticky=W, padx=2, pady=2)
+trim_hours_entry = ttk.Entry(input_frame, width=50)
+trim_hours_entry.grid(row=1, column=1, sticky=E, padx=2, pady=2)
 
-keep_hours_frame = ttk.Frame(input_frame)
-keep_hours_frame.pack(pady=5)
-keep_hours_label = ttk.Label(keep_hours_frame, text="Keep Hours:")
-keep_hours_label.grid(row=0, column=0, sticky=tk.W, padx=2)
-keep_hours_entry = ttk.Entry(keep_hours_frame, width=50)
-keep_hours_entry.grid(row=0, column=1, padx=2)
+keep_hours_label = ttk.Label(input_frame, text="Keep Hours:")
+keep_hours_label.grid(row=2, column=0, sticky=W, padx=2, pady=2)
+keep_hours_entry = ttk.Entry(input_frame, width=50)
+keep_hours_entry.grid(row=2, column=1, sticky=E, padx=2, pady=2)
 
-bin_hours_frame = ttk.Frame(input_frame)
-bin_hours_frame.pack(pady=5)
-bin_hours_label = ttk.Label(bin_hours_frame, text="Bin Hours:")
-bin_hours_label.grid(row=0, column=0, sticky=tk.W, padx=2)
-bin_hours_entry = ttk.Entry(bin_hours_frame, width=50)
-bin_hours_entry.grid(row=0, column=1, padx=2)
+bin_hours_label = ttk.Label(input_frame, text="Bin Hours:")
+bin_hours_label.grid(row=3, column=0, sticky=W, padx=2, pady=2)
+bin_hours_entry = ttk.Entry(input_frame, width=50)
+bin_hours_entry.grid(row=3, column=1, sticky=E, padx=2, pady=2)
+
+config_file_label = ttk.Label(input_frame, text="Config File:")
+config_file_label.grid(row=4, column=0, sticky=W, padx=2, pady=2)
+btn_browse_config = ttk.Button(input_frame, text="Browse", command=browse_config_file)
+btn_browse_config.grid(row=4, column=2, sticky=E, padx=2, pady= 2)
+config_file_entry = ttk.Entry(input_frame, width=50)
+config_file_entry.grid(row=4, column=1, sticky=E, padx=2, pady=2)
+
+label_id = ttk.Label(input_frame, text="ID:")
+label_id.grid(row=5, column=0, sticky=W, padx=2, pady=2)
+entry_id = ttk.Entry(input_frame, width=50)
+entry_id.grid(row=5, column=1, sticky=E, padx=2, pady=2)
+
+label_group_label = ttk.Label(input_frame, text="Group Label:")
+label_group_label.grid(row=6, column=0, sticky=W, padx=2, pady=2)
+entry_group_label = ttk.Entry(input_frame, width=50)
+entry_group_label.grid(row=6, column=1, sticky=E, padx=2, pady=2)
+
+# Add "Add Label" button
+btn_add_config = ttk.Button(input_frame, text="Add Label",
+                            command=lambda: save_configuration(entry_id.get(), entry_group_label.get(),
+                                                               directory_path_entry.get()))
+btn_add_config.grid(row=7, column=1, padx=2, pady=2)
+
+output_text = ttk.Text(input_frame, wrap=tk.WORD, width=100, height=20)
+output_text.grid(row=8, column=0, columnspan=3, padx=10, pady=10)
+
+start_button = ttk.Button(input_frame, text="Start Processing", command=main_process_clams_data)
+start_button.grid(row=9, column=0, columnspan=3, padx=10, pady=10)
 
 # Set weights for rescaling window
 main_frame.grid_rowconfigure(0, weight=1)
@@ -151,23 +322,6 @@ input_frame.grid_rowconfigure(4, weight=1)
 input_frame.grid_rowconfigure(5, weight=3)
 input_frame.grid_columnconfigure(0, weight=1)
 
-path_frame.grid_rowconfigure(0, weight=1)
-path_frame.grid_columnconfigure(0, weight=1)
-path_frame.grid_columnconfigure(1, weight=3)
-path_frame.grid_columnconfigure(2, weight=1)
-
-trim_hours_frame.grid_rowconfigure(0, weight=1)
-trim_hours_frame.grid_columnconfigure(0, weight=1)
-trim_hours_frame.grid_columnconfigure(1, weight=3)
-
-keep_hours_frame.grid_rowconfigure(0, weight=1)
-keep_hours_frame.grid_columnconfigure(0, weight=1)
-keep_hours_frame.grid_columnconfigure(1, weight=3)
-
-bin_hours_frame.grid_rowconfigure(0, weight=1)
-bin_hours_frame.grid_columnconfigure(0, weight=1)
-bin_hours_frame.grid_columnconfigure(1, weight=3)
-
 # Create a footer frame for the credits
 footer_frame = ttk.Frame(root)
 footer_frame.pack(fill=tk.X, side=tk.BOTTOM, pady=5)
@@ -180,11 +334,5 @@ credits_label.pack(side=tk.LEFT, padx=10)
 # Add Exit button
 exit_button = ttk.Button(footer_frame, text="Exit", command=root.quit, bootstyle=DANGER)
 exit_button.pack(side=tk.RIGHT, padx=10)
-
-output_text = ttk.Text(input_frame, wrap=tk.WORD, width=80, height=20)
-output_text.pack(padx=10, pady=10)
-
-start_button = ttk.Button(input_frame, text="Start Processing", command=main_process_clams_data)
-start_button.pack(padx=10, pady=10)
 
 root.mainloop()
