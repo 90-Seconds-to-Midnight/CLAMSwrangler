@@ -32,9 +32,6 @@ def browse_working_directory():
     directory_path_entry.delete(0, tk.END)
     directory_path_entry.insert(0, folder_selected)
 
-    # Initialize the experiment configuration file for the selected directory
-    initialize_experiment_config_file(folder_selected)
-
 
 def initialize_experiment_config_file(directory_path):
     # Create a folder for the config file
@@ -49,6 +46,12 @@ def initialize_experiment_config_file(directory_path):
 
 
 def save_configuration(id_value, group_label_value, directory_path):
+    # Check if the experiment configuration file exists
+    experiment_config_file = os.path.join(directory_path, 'config/experiment_config.csv')
+    if not os.path.exists(experiment_config_file):
+        # Initialize a new experiment configuration file
+        initialize_experiment_config_file(directory_path)
+
     # Path to the experiment configuration file
     config_file = os.path.join(directory_path, 'config', 'experiment_config.csv')
 
@@ -69,6 +72,13 @@ def save_configuration(id_value, group_label_value, directory_path):
 def browse_config_file():
     """Opens dialog window to select a prebuilt config file and copy it to the config directory.
     """
+    directory_path = directory_path_entry.get()
+    # Check if the experiment configuration file exists
+    experiment_config_file = os.path.join(directory_path, 'config/experiment_config.csv')
+    if not os.path.exists(experiment_config_file):
+        # Initialize a new experiment configuration file
+        initialize_experiment_config_file(directory_path)
+
     selected_file = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")])
     if selected_file:
         experiment_config_file = selected_file  # Update the global variable
@@ -85,7 +95,7 @@ def browse_config_file():
                     "The experiment configuration file does not have the expected columns: ID, GROUP LABEL")
 
             # Copy the selected file to the config directory
-            config_directory = os.path.join(directory_path_entry.get(), 'config')
+            config_directory = os.path.join(directory_path, 'config')
             config_file_dest = os.path.join(config_directory, 'experiment_config.csv')
             # We'll use pandas to copy the file while preserving the format
             config_df.to_csv(config_file_dest, index=False, columns=expected_columns)
