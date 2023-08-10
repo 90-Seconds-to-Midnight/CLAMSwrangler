@@ -60,8 +60,11 @@ def main_process_clams_data():
     output_text.insert("end", "\nBinning all trimmed CLAMS data...\n")
     process_directory(directory_path, bin_hours)
 
+    # Harcoded path to experiment config file for testing
+    experiment_config_file = "/Users/alanmizener/Documents/Python/CLAMS_Project/experiment_config.csv"
+
     output_text.insert("end", "\nCombining all binned CLAMS data...\n")
-    recombine_columns(directory_path)
+    recombine_columns(directory_path, experiment_config_file)
 
     output_text.insert("end", "\nAll CLAMS files processed successfully!")
 

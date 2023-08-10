@@ -245,7 +245,7 @@ def extract_id_number(filename):
         return None
 
 
-def recombine_columns(directory_path):
+def recombine_columns(directory_path, experiment_config_file):
     # Define Combined CLAMS data directory
     combined_directory = os.path.join(directory_path, "Combined_CLAMS_data")
     if not os.path.exists(combined_directory):
@@ -258,7 +258,10 @@ def recombine_columns(directory_path):
     output_variables = ['ACCCO2', 'ACCO2', 'FEED1 ACC', 'FEED1', 'RER', 'TOT AMB', 'VCO2', 'VO2', 'WHEEL ACC', 'WHEEL']
 
     # Define columns to include in the output
-    selected_columns = ['ID', 'DAY', 'HOUR', '24 HOUR'] + output_variables
+    selected_columns = ['ID', 'GROUP LABEL', 'DAY', 'HOUR', '24 HOUR'] + output_variables
+
+    # Read the experiment configuration
+    config_df = pd.read_csv(experiment_config_file)
 
     # Create an empty DataFrame to store the combined data
     combined_data = pd.DataFrame(columns=selected_columns)
@@ -273,8 +276,16 @@ def recombine_columns(directory_path):
             # Get the 'ID' number from the file name
             file_id = extract_id_number(filename)
 
+            # Find the GROUP LABEL for the current ID
+            group_label = config_df[config_df['ID'] == int(file_id)]['GROUP LABEL'].values
+            if len(group_label) > 0:
+                group_label = group_label[0]
+            else:
+                group_label = ""
+
             # Add columns 'ID', 'DAY', 'HOUR', '24 HOUR'
             df['ID'] = file_id
+            df['GROUP LABEL'] = group_label
             df['DAY'] = df['DAY'].astype(int)
             df['HOUR'] = df['HOUR'].astype(int)
             df['24 HOUR'] = df['24 HOUR'].astype(int)
@@ -288,5 +299,5 @@ def recombine_columns(directory_path):
     # Group the combined data by the output variables and save to separate .csv files
     for variable in output_variables:
         output_filename = os.path.join(combined_directory, f"{variable}.csv")
-        variable_data = combined_data[['ID', 'DAY', 'HOUR', '24 HOUR', variable]]
+        variable_data = combined_data[['ID', 'GROUP LABEL', 'DAY', 'HOUR', '24 HOUR', variable]]
         variable_data.to_csv(output_filename, index=False)
