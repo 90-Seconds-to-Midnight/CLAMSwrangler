@@ -11,6 +11,9 @@ from shutil import move
 from clams_processing import clean_all_clams_data, trim_all_clams_data, process_directory, recombine_columns
 
 
+VERSION = "v0.8.1-beta"
+
+
 class StdoutRedirect:
     def __init__(self, text_widget):
         self.text_widget = text_widget
@@ -23,6 +26,16 @@ class StdoutRedirect:
 
     def flush(self):
         self._stdout.flush()
+
+
+def resource_path(relative_path):
+    """Returns filepath """
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 
 def browse_working_directory():
@@ -219,7 +232,7 @@ def main_process_clams_data():
 
 # Create the main window
 root = ttk.Window(themename="superhero")
-root.title("CLAMSwrangler")
+root.title(f"CLAMS Wrangler {VERSION}")
 
 # Get the default font
 default_font = font.nametofont("TkDefaultFont")
@@ -231,8 +244,8 @@ default_font.configure(size=12, family="Arial")
 header_frame = ttk.Frame(root)
 header_frame.pack(fill=tk.X)
 
-# Add a logo (replace 'logo.png' with the path to your logo image)
-logo_image = tk.PhotoImage(file='./assets/logo.png')
+# Add a logo
+logo_image = tk.PhotoImage(file=resource_path('logo.png'))
 logo_label = ttk.Label(header_frame, image=logo_image)
 logo_label.pack(side=tk.TOP, pady=10)
 
@@ -327,7 +340,7 @@ footer_frame = ttk.Frame(root)
 footer_frame.pack(fill=tk.X, side=tk.BOTTOM, pady=5)
 
 # Add credits text
-credits_text = "Version 0.8.0-beta. Developed by Pistilli Lab. Credits: Alan Mizener, Stuart Clayton, Lauren Rentz."
+credits_text = f"{VERSION}. Developed by Pistilli Lab. Credits: Alan Mizener, Stuart Clayton, Lauren Rentz."
 credits_label = ttk.Label(footer_frame, text=credits_text)
 credits_label.pack(side=tk.LEFT, padx=10)
 
