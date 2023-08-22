@@ -233,6 +233,7 @@ def main_process_clams_data():
 # Create the main window
 root = ttk.Window(themename="superhero")
 root.title(f"CLAMS Wrangler {VERSION}")
+root.minsize(1000, 750)  # set minimum window size
 
 # Get the default font
 default_font = font.nametofont("TkDefaultFont")
@@ -267,45 +268,46 @@ instructions_text.insert(tk.END,
 # Defines frame for user input
 input_frame = ttk.Frame(main_frame)
 input_frame.grid(row=0, column=1, padx=10, pady=10)
+input_frame.grid_columnconfigure(1, weight=1)
 
 directory_path_label = ttk.Label(input_frame, text="Directory Path:")
-directory_path_label.grid(row=0, column=0, sticky=W, padx=2, pady=2)
+directory_path_label.grid(row=0, column=0, sticky=EW, padx=2, pady=2)
 browse_button = ttk.Button(input_frame, text="Browse", command=browse_working_directory)
 browse_button.grid(row=0, column=2, sticky=E, padx=2, pady=2)
 directory_path_entry = ttk.Entry(input_frame, width=50)
-directory_path_entry.grid(row=0, column=1, sticky=E, padx=2, pady=2)
+directory_path_entry.grid(row=0, column=1, sticky=EW, padx=2, pady=2)
 
 trim_hours_label = ttk.Label(input_frame, text="Trim Hours:")
-trim_hours_label.grid(row=1, column=0, sticky=W, padx=2, pady=2)
+trim_hours_label.grid(row=1, column=0, sticky=EW, padx=2, pady=2)
 trim_hours_entry = ttk.Entry(input_frame, width=50)
-trim_hours_entry.grid(row=1, column=1, sticky=E, padx=2, pady=2)
+trim_hours_entry.grid(row=1, column=1, sticky=EW, padx=2, pady=2)
 
 keep_hours_label = ttk.Label(input_frame, text="Keep Hours:")
-keep_hours_label.grid(row=2, column=0, sticky=W, padx=2, pady=2)
+keep_hours_label.grid(row=2, column=0, sticky=EW, padx=2, pady=2)
 keep_hours_entry = ttk.Entry(input_frame, width=50)
-keep_hours_entry.grid(row=2, column=1, sticky=E, padx=2, pady=2)
+keep_hours_entry.grid(row=2, column=1, sticky=EW, padx=2, pady=2)
 
 bin_hours_label = ttk.Label(input_frame, text="Bin Hours:")
-bin_hours_label.grid(row=3, column=0, sticky=W, padx=2, pady=2)
+bin_hours_label.grid(row=3, column=0, sticky=EW, padx=2, pady=2)
 bin_hours_entry = ttk.Entry(input_frame, width=50)
-bin_hours_entry.grid(row=3, column=1, sticky=E, padx=2, pady=2)
+bin_hours_entry.grid(row=3, column=1, sticky=EW, padx=2, pady=2)
 
 config_file_label = ttk.Label(input_frame, text="Config File:")
-config_file_label.grid(row=4, column=0, sticky=W, padx=2, pady=2)
+config_file_label.grid(row=4, column=0, sticky=EW, padx=2, pady=2)
 btn_browse_config = ttk.Button(input_frame, text="Browse", command=browse_config_file)
-btn_browse_config.grid(row=4, column=2, sticky=E, padx=2, pady= 2)
+btn_browse_config.grid(row=4, column=2, sticky=EW, padx=2, pady= 2)
 config_file_entry = ttk.Entry(input_frame, width=50)
-config_file_entry.grid(row=4, column=1, sticky=E, padx=2, pady=2)
+config_file_entry.grid(row=4, column=1, sticky=EW, padx=2, pady=2)
 
 label_id = ttk.Label(input_frame, text="ID:")
-label_id.grid(row=5, column=0, sticky=W, padx=2, pady=2)
+label_id.grid(row=5, column=0, sticky=EW, padx=2, pady=2)
 entry_id = ttk.Entry(input_frame, width=50)
-entry_id.grid(row=5, column=1, sticky=E, padx=2, pady=2)
+entry_id.grid(row=5, column=1, sticky=EW, padx=2, pady=2)
 
 label_group_label = ttk.Label(input_frame, text="Group Label:")
-label_group_label.grid(row=6, column=0, sticky=W, padx=2, pady=2)
+label_group_label.grid(row=6, column=0, sticky=EW, padx=2, pady=2)
 entry_group_label = ttk.Entry(input_frame, width=50)
-entry_group_label.grid(row=6, column=1, sticky=E, padx=2, pady=2)
+entry_group_label.grid(row=6, column=1, sticky=EW, padx=2, pady=2)
 
 # Add "Add Label" button
 btn_add_config = ttk.Button(input_frame, text="Add Label",
