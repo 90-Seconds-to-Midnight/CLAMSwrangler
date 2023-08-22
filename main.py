@@ -351,7 +351,8 @@ footer_frame = ttk.Frame(root)
 footer_frame.pack(fill=tk.X, side=tk.BOTTOM, pady=5)
 
 # Add credits text
-credits_text = f"{VERSION}. Developed by Pistilli Lab. Credits: Alan Mizener, Stuart Clayton, Lauren Rentz."
+credits_text = (f"{VERSION}. Developed by Pistilli Lab. Credits: Alan Mizener, Stuart Clayton, Lauren Rentz. "
+                f"Visit github.com/PistilliLab for updates.")
 credits_label = ttk.Label(footer_frame, text=credits_text)
 credits_label.pack(side=tk.LEFT, padx=10)
 
