@@ -9,6 +9,7 @@ from datetime import datetime
 import time
 from shutil import move
 from clams_processing import clean_all_clams_data, trim_all_clams_data, process_directory, recombine_columns
+from reformat import reformat_csvs_in_directory
 
 
 class StdoutRedirect:
@@ -187,6 +188,9 @@ def main_process_clams_data():
 
     output_text.insert("end", "\nCombining all binned CLAMS data...\n")
     recombine_columns(directory_path, experiment_config_file)
+
+    output_text.insert("end", "\nReformatting all combined CLAMS data...\n")
+    reformat_csvs_in_directory(os.path.join(directory_path, 'Combined_CLAMS_data'))
 
     output_text.insert("end", "\nAll CLAMS files processed successfully!")
 
