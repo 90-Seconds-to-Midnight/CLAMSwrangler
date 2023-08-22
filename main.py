@@ -1,13 +1,19 @@
+# python native libs
+import os
+import sys
+import time
+import platform
+from datetime import datetime
+from shutil import move
+
+# third-party libs
+import pandas as pd
 import tkinter as tk
 from tkinter import filedialog, font
-import sys
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
-import os
-import pandas as pd
-from datetime import datetime
-import time
-from shutil import move
+
+# original libs
 from clams_processing import clean_all_clams_data, trim_all_clams_data, process_directory, recombine_columns
 
 
@@ -234,6 +240,13 @@ def main_process_clams_data():
 root = ttk.Window(themename="superhero")
 root.title(f"CLAMS Wrangler {VERSION}")
 root.minsize(1000, 750)  # set minimum window size
+
+# detect OS and use correct icon version
+if platform.system() == "Windows":
+    root.iconbitmap('icon.ico')
+else:  # Assuming Linux or other platforms
+    icon_image = tk.PhotoImage(file='icon.png')
+    root.iconphoto(True, icon_image)
 
 # Get the default font
 default_font = font.nametofont("TkDefaultFont")
