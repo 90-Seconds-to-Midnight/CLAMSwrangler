@@ -1,21 +1,17 @@
-# python native libs
 import os
+import platform
 import sys
 import time
-import platform
+import tkinter as tk
 from datetime import datetime
 from shutil import move
-
-# third-party libs
-import pandas as pd
-import tkinter as tk
 from tkinter import filedialog, font
+
+import pandas as pd
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 
-# original libs
 from clams_processing import clean_all_clams_data, trim_all_clams_data, process_directory, recombine_columns
-
 
 VERSION = "v0.8.1-beta"
 
@@ -35,7 +31,7 @@ class StdoutRedirect:
 
 
 def resource_path(relative_path):
-    """Returns filepath """
+    """Returns filepath of resources to include in binary."""
     try:
         base_path = sys._MEIPASS
     except Exception:
