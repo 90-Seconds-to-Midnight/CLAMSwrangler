@@ -1,10 +1,9 @@
-import glob
-import os
-import re
-from datetime import timedelta
-
-import numpy as np
 import pandas as pd
+import os
+import glob
+import numpy as np
+import re
+from datetime import datetime, timedelta
 
 
 def clean_all_clams_data(directory_path):
@@ -60,7 +59,7 @@ def clean_all_clams_data(directory_path):
             clean_file(file_path, output_directory)
 
 
-def trim_all_clams_data(directory_path, trim_hours, keep_hours):
+def trim_all_clams_data(directory_path, trim_hours, keep_hours, start_dark):
     """Trims all cleaned CLAMS data files in the specified directory.
 
     Parameters:
@@ -94,23 +93,31 @@ def trim_all_clams_data(directory_path, trim_hours, keep_hours):
         df['DATE/TIME'] = pd.to_datetime(df['DATE/TIME'], errors='coerce')
 
         # Calculate the starting timestamp after trimming
-        start_time = df['DATE/TIME'].iloc[0] + timedelta(hours=trim_hours)
-
-        # Filter the dataframe to start from the trimmed timestamp
-        df_trimmed = df[df['DATE/TIME'] >= start_time]
+        start_index = df[df['DATE/TIME'] >= df['DATE/TIME'].iloc[0] + timedelta(hours=trim_hours)].index[0]
 
         # Note the value in the "LED LIGHTNESS" column after trimming
-        initial_led_value = df_trimmed['LED LIGHTNESS'].iloc[0]
+        initial_led_value = df['LED LIGHTNESS'].iloc[start_index]
 
         # Find the index of the next change in the "LED LIGHTNESS" value
-        led_lightness_change_index = df_trimmed[df_trimmed['LED LIGHTNESS'] != initial_led_value].index[0]
+        while df['LED LIGHTNESS'].iloc[start_index] == initial_led_value:
+            start_index += 1
+
+        # Determine if the 1st light change does not match the cycle specified by the user and adjust start_index to the next light change if necessary
+        if (start_dark and df['LED LIGHTNESS'].iloc[start_index] != 0) or (not start_dark and df['LED LIGHTNESS'].iloc[start_index] == 0):
+            initial_led_value = df['LED LIGHTNESS'].iloc[start_index]
+            while df['LED LIGHTNESS'].iloc[start_index] == initial_led_value:
+                start_index += 1
+
+        # Zero columns that contain accumulative variables to appropriately account for variable trimming times
+        columns_to_zero = ['ACCO2', 'ACCCO2', 'FEED1 ACC', 'WHEEL ACC']
+        for col in columns_to_zero:
+                df[col] = (df[col] - df[col].iloc[start_index - 1]).round(2)
 
         # Calculate the ending timestamp
-        end_time = df['DATE/TIME'].iloc[led_lightness_change_index] + timedelta(hours=keep_hours)
+        end_time = df['DATE/TIME'].iloc[start_index] + timedelta(hours=keep_hours)
 
-        # Filter the dataframe to start from the LED change and end at the specified timestamp
-        df_result = df[
-            (df['DATE/TIME'] >= df['DATE/TIME'].iloc[led_lightness_change_index]) & (df['DATE/TIME'] <= end_time)]
+        # Filter the dataframe from calculated start_index to end_time
+        df_result = df[(df.index >= start_index) & (df['DATE/TIME'] <= end_time)]
 
         # Save the resulting data to a new CSV file in the "Trimmed_CLAMS_data" directory
         file_name = os.path.basename(file_path)
@@ -132,8 +139,9 @@ def bin_clams_data(file_path, bin_hours):
                        "LED SATURATION", "BIN"]
     df = df.drop(columns=columns_to_drop, errors='ignore')
 
-    # Add TOT AMB column to the original dataframe
-    df['TOT AMB'] = df['XAMB'] + df['YAMB']
+    # Add AMB & AMB ACC columns to the original dataframe
+    df['AMB'] = df['XAMB'] + df['YAMB']
+    df['AMB ACC'] = df['AMB'].cumsum()
 
     # Create a new column for bin labels
     df['BIN'] = np.nan
@@ -154,10 +162,10 @@ def bin_clams_data(file_path, bin_hours):
         df.loc[subset.index, 'BIN'] = bin_labels
 
     # Columns to retain the last value in the bin
-    last_val_columns = ["INTERVAL", "CHAN", "DATE/TIME", "ACCO2", "ACCCO2", "FEED1 ACC", "WHEEL ACC"]
+    last_val_columns = ["INTERVAL", "CHAN", "DATE/TIME", "ACCO2", "ACCCO2", "FEED1 ACC", "WHEEL ACC", "AMB ACC"]
 
     # Columns to sum within the bin
-    sum_columns = ["WHEEL", "FEED1", "TOT AMB"]
+    sum_columns = ["WHEEL", "FEED1", "AMB"]
 
     # Columns to average (excluding the ones we're taking the last value or summing)
     avg_columns = df.columns.difference(last_val_columns + sum_columns + ['BIN', 'LED LIGHTNESS'])
@@ -205,14 +213,14 @@ def bin_clams_data(file_path, bin_hours):
     # Reorder columns based on your request
     desired_order = ["CHAN", "INTERVAL_start", "INTERVAL_end", "DATE/TIME_start", "DATE/TIME_end", "DURATION",
                      "VO2", "ACCO2", "VCO2", "ACCCO2", "RER", "HEAT", "FLOW", "PRESSURE", "FEED1", "FEED1 ACC",
-                     "TOT AMB", "WHEEL", "WHEEL ACC", "ENCLOSURE TEMP", "ENCLOSURE SETPOINT", "LED LIGHTNESS", "DAY", "HOUR", "24 HOUR"]
+                     "AMB", "AMB ACC", "WHEEL", "WHEEL ACC", "ENCLOSURE TEMP", "ENCLOSURE SETPOINT", "LED LIGHTNESS", "DAY", "HOUR", "24 HOUR"]
     df_binned = df_binned[desired_order]
 
     # Round all variables to 4 decimal places
     df_binned = df_binned.round(4)
 
     # Save the binned data to a new CSV file
-    output_path = file_path.replace("Trimmed_CLAMS_data", "Binned_CLAMS_data").replace(".csv", "_binned.csv")
+    output_path = file_path.replace("Trimmed_CLAMS_data", "Binned_CLAMS_data").replace(".csv", f"_{bin_hours}hour_bins.csv")
 
     # Check if the directory exists, if not, create it
     output_directory = os.path.dirname(output_path)
@@ -238,8 +246,8 @@ def process_directory(directory_path, bin_hours):
 
 
 def extract_id_number(filename):
-    # Extract the four digits following 'ID' in the filename
-    match = re.search(r'ID(\d{4})', filename)
+    # Extract the ID number from the filename
+    match = re.search(r'ID(\d+)', filename)
     if match:
         return match.group(1)
     else:
@@ -256,7 +264,7 @@ def recombine_columns(directory_path, experiment_config_file):
     input_directory = os.path.join(directory_path, "Binned_CLAMS_data")
 
     # Desired output variables
-    output_variables = ['ACCCO2', 'ACCO2', 'FEED1 ACC', 'FEED1', 'RER', 'TOT AMB', 'VCO2', 'VO2', 'WHEEL ACC', 'WHEEL']
+    output_variables = ['ACCCO2', 'ACCO2', 'FEED1 ACC', 'FEED1', 'RER', 'AMB', 'AMB ACC', 'VCO2', 'VO2', 'WHEEL ACC', 'WHEEL']
 
     # Define columns to include in the output
     selected_columns = ['ID', 'GROUP LABEL', 'DAY', 'HOUR', '24 HOUR'] + output_variables
@@ -302,3 +310,39 @@ def recombine_columns(directory_path, experiment_config_file):
         output_filename = os.path.join(combined_directory, f"{variable}.csv")
         variable_data = combined_data[['ID', 'GROUP LABEL', 'DAY', 'HOUR', '24 HOUR', variable]]
         variable_data.to_csv(output_filename, index=False)
+
+# Function to reformat a single CSV file
+def reformat_csv(input_csv_path, output_csv_path):
+    df = pd.read_csv(input_csv_path)
+
+    # Replace missing values in "GROUP LABEL" with a placeholder value
+    df["GROUP LABEL"].fillna("NO_LABEL", inplace=True)
+
+    # Extract the name of the last column
+    last_column_name = df.columns[-1]
+
+    # Pivot the table using "ID", "GROUP LABEL", "DAY", and "24 HOUR" as indices
+    pivot_table = df.pivot_table(index=["ID", "GROUP LABEL", "DAY"],
+                                 columns="24 HOUR", values=last_column_name,
+                                 aggfunc="first").reset_index()
+
+    # Flatten the column index and rename columns
+    pivot_table.columns = ["ID", "GROUP LABEL", "DAY"] + [f"{last_column_name}_{hour}" for hour in
+                                                          pivot_table.columns[3:]]
+
+    # Save the pivot table to a new CSV file
+    pivot_table.to_csv(output_csv_path, index=False)
+
+
+# Function to process all CSV files in a directory
+def reformat_csvs_in_directory(input_dir):
+    output_dir = os.path.join(input_dir, "Reformatted_CSVs")
+    os.makedirs(output_dir, exist_ok=True)
+
+    for filename in os.listdir(input_dir):
+        if filename.endswith(".csv"):
+            input_csv_path = os.path.join(input_dir, filename)
+            output_csv_path = os.path.join(output_dir, f"reformatted_{filename}")
+            reformat_csv(input_csv_path, output_csv_path)
+            print(f"Reformatting '{filename}' to reformatted_'{filename}'")
+

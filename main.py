@@ -1,19 +1,14 @@
-import os
-import platform
-import sys
-import time
 import tkinter as tk
-from datetime import datetime
-from shutil import move
 from tkinter import filedialog, font
-
-import pandas as pd
+import sys
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
-
-from clams_processing import clean_all_clams_data, trim_all_clams_data, process_directory, recombine_columns
-
-VERSION = "v0.8.1-beta"
+import os
+import pandas as pd
+from datetime import datetime
+import time
+from shutil import move
+from clams_processing import clean_all_clams_data, trim_all_clams_data, process_directory, recombine_columns, reformat_csvs_in_directory
 
 
 class StdoutRedirect:
@@ -28,16 +23,6 @@ class StdoutRedirect:
 
     def flush(self):
         self._stdout.flush()
-
-
-def resource_path(relative_path):
-    """Returns filepath of resources to include in binary."""
-    try:
-        base_path = sys._MEIPASS
-    except Exception:
-        base_path = os.path.abspath(".")
-
-    return os.path.join(base_path, relative_path)
 
 
 def browse_working_directory():
@@ -159,6 +144,7 @@ def main_process_clams_data():
     """
     directory_path = directory_path_entry.get()
     trim_hours = int(trim_hours_entry.get())
+    start_dark = start_cycle_var.get() == "Start Dark"
     keep_hours = int(keep_hours_entry.get())
     bin_hours = int(bin_hours_entry.get())
 
@@ -192,7 +178,7 @@ def main_process_clams_data():
     clean_all_clams_data(directory_path)
 
     output_text.insert("end", "\nTrimming all cleaned CLAMS data...\n")
-    trim_all_clams_data(directory_path, trim_hours, keep_hours)
+    trim_all_clams_data(directory_path, trim_hours, keep_hours, start_dark)
 
     output_text.insert("end", "\nBinning all trimmed CLAMS data...\n")
     process_directory(directory_path, bin_hours)
@@ -203,6 +189,9 @@ def main_process_clams_data():
     output_text.insert("end", "\nCombining all binned CLAMS data...\n")
     recombine_columns(directory_path, experiment_config_file)
 
+    output_text.insert("end", "\nReformatting all combined CLAMS data...\n")
+    reformat_csvs_in_directory(os.path.join(directory_path, 'Combined_CLAMS_data'))
+
     output_text.insert("end", "\nAll CLAMS files processed successfully!")
 
     # Restore the original stdout
@@ -212,6 +201,7 @@ def main_process_clams_data():
     input_values = {
         "Directory Path": directory_path_entry.get(),
         "Trim Hours": trim_hours_entry.get(),
+        "Start Cycle": start_cycle_var,
         "Keep Hours": keep_hours_entry.get(),
         "Bin Hours": bin_hours_entry.get(),
         "Config File": config_file_entry.get(),
@@ -234,15 +224,8 @@ def main_process_clams_data():
 
 # Create the main window
 root = ttk.Window(themename="superhero")
-root.title(f"CLAMS Wrangler {VERSION}")
-root.minsize(1000, 750)  # set minimum window size
-
-# detect OS and use correct icon version
-if platform.system() == "Windows":
-    root.iconbitmap('icon.ico')
-else:  # Assuming Linux or other platforms
-    icon_image = tk.PhotoImage(file='icon.png')
-    root.iconphoto(True, icon_image)
+root.title("CLAMSwrangler")
+root.minsize(width=1200, height=800)
 
 # Get the default font
 default_font = font.nametofont("TkDefaultFont")
@@ -254,8 +237,8 @@ default_font.configure(size=12, family="Arial")
 header_frame = ttk.Frame(root)
 header_frame.pack(fill=tk.X)
 
-# Add a logo
-logo_image = tk.PhotoImage(file=resource_path('logo.png'))
+# Add a logo (replace 'logo.png' with the path to your logo image)
+logo_image = tk.PhotoImage(file='./assets/logo.png')
 logo_label = ttk.Label(header_frame, image=logo_image)
 logo_label.pack(side=tk.TOP, pady=10)
 
@@ -273,50 +256,53 @@ instructions_text = tk.Text(instructions_frame, wrap=tk.WORD, width=60, height=4
 instructions_text.pack()
 instructions_text.insert(tk.END,
                          "Instructions:\n\n1. Enter the path to the directory containing all of the .CSV CLAMS data files you wish to process.\n2. Enter the number of hours you wish to trim from the beginning of the data.\n\tRecommend at least 24 hours. \n3. Enter the number of hours of data you wish to keep of CLAMS data to be used downstream.\n4. Enter the size of the bin in hours.\n\tMust be a factor of 12.\n5. Click “Process CLAMS data”.\n\nCongratulations! You saved hours of menial labor! :D\n\n")  # Add your instructions here
+instructions_text.config(state=tk.DISABLED)
 
 # Defines frame for user input
 input_frame = ttk.Frame(main_frame)
 input_frame.grid(row=0, column=1, padx=10, pady=10)
-input_frame.grid_columnconfigure(1, weight=1)
 
 directory_path_label = ttk.Label(input_frame, text="Directory Path:")
-directory_path_label.grid(row=0, column=0, sticky=EW, padx=2, pady=2)
-browse_button = ttk.Button(input_frame, text="Browse", command=browse_working_directory)
+directory_path_label.grid(row=0, column=0, sticky=W, padx=2, pady=2)
+browse_button = ttk.Button(input_frame, text="Browse", width=10, command=browse_working_directory)
 browse_button.grid(row=0, column=2, sticky=E, padx=2, pady=2)
 directory_path_entry = ttk.Entry(input_frame, width=50)
-directory_path_entry.grid(row=0, column=1, sticky=EW, padx=2, pady=2)
+directory_path_entry.grid(row=0, column=1, sticky=E, padx=2, pady=2)
 
 trim_hours_label = ttk.Label(input_frame, text="Trim Hours:")
-trim_hours_label.grid(row=1, column=0, sticky=EW, padx=2, pady=2)
+trim_hours_label.grid(row=1, column=0, sticky=W, padx=2, pady=2)
+start_cycle_var = tk.StringVar()
+start_cycle_dropdown = ttk.Combobox(input_frame, textvariable=start_cycle_var, values=["Start Light", "Start Dark"], width=8, state="readonly")
+start_cycle_dropdown.grid(row=1, column=2, sticky=E, padx=1, pady=2)
 trim_hours_entry = ttk.Entry(input_frame, width=50)
-trim_hours_entry.grid(row=1, column=1, sticky=EW, padx=2, pady=2)
+trim_hours_entry.grid(row=1, column=1, sticky=E, padx=2, pady=2)
 
 keep_hours_label = ttk.Label(input_frame, text="Keep Hours:")
-keep_hours_label.grid(row=2, column=0, sticky=EW, padx=2, pady=2)
+keep_hours_label.grid(row=2, column=0, sticky=W, padx=2, pady=2)
 keep_hours_entry = ttk.Entry(input_frame, width=50)
-keep_hours_entry.grid(row=2, column=1, sticky=EW, padx=2, pady=2)
+keep_hours_entry.grid(row=2, column=1, sticky=E, padx=2, pady=2)
 
 bin_hours_label = ttk.Label(input_frame, text="Bin Hours:")
-bin_hours_label.grid(row=3, column=0, sticky=EW, padx=2, pady=2)
+bin_hours_label.grid(row=3, column=0, sticky=W, padx=2, pady=2)
 bin_hours_entry = ttk.Entry(input_frame, width=50)
-bin_hours_entry.grid(row=3, column=1, sticky=EW, padx=2, pady=2)
+bin_hours_entry.grid(row=3, column=1, sticky=E, padx=2, pady=2)
 
 config_file_label = ttk.Label(input_frame, text="Config File:")
-config_file_label.grid(row=4, column=0, sticky=EW, padx=2, pady=2)
-btn_browse_config = ttk.Button(input_frame, text="Browse", command=browse_config_file)
-btn_browse_config.grid(row=4, column=2, sticky=EW, padx=2, pady= 2)
+config_file_label.grid(row=4, column=0, sticky=W, padx=2, pady=2)
+btn_browse_config = ttk.Button(input_frame, text="Browse", width=10, command=browse_config_file)
+btn_browse_config.grid(row=4, column=2, sticky=E, padx=2, pady= 2)
 config_file_entry = ttk.Entry(input_frame, width=50)
-config_file_entry.grid(row=4, column=1, sticky=EW, padx=2, pady=2)
+config_file_entry.grid(row=4, column=1, sticky=E, padx=2, pady=2)
 
 label_id = ttk.Label(input_frame, text="ID:")
-label_id.grid(row=5, column=0, sticky=EW, padx=2, pady=2)
+label_id.grid(row=5, column=0, sticky=W, padx=2, pady=2)
 entry_id = ttk.Entry(input_frame, width=50)
-entry_id.grid(row=5, column=1, sticky=EW, padx=2, pady=2)
+entry_id.grid(row=5, column=1, sticky=E, padx=2, pady=2)
 
 label_group_label = ttk.Label(input_frame, text="Group Label:")
-label_group_label.grid(row=6, column=0, sticky=EW, padx=2, pady=2)
+label_group_label.grid(row=6, column=0, sticky=W, padx=2, pady=2)
 entry_group_label = ttk.Entry(input_frame, width=50)
-entry_group_label.grid(row=6, column=1, sticky=EW, padx=2, pady=2)
+entry_group_label.grid(row=6, column=1, sticky=E, padx=2, pady=2)
 
 # Add "Add Label" button
 btn_add_config = ttk.Button(input_frame, text="Add Label",
@@ -351,9 +337,8 @@ footer_frame = ttk.Frame(root)
 footer_frame.pack(fill=tk.X, side=tk.BOTTOM, pady=5)
 
 # Add credits text
-credits_text = (f"{VERSION}. Developed by Pistilli Lab. Credits: Alan Mizener, Stuart Clayton, Lauren Rentz. "
-                f"Visit github.com/PistilliLab for updates.")
-credits_label = ttk.Label(footer_frame, text=credits_text)
+credits_text = "Version 0.8.0-beta. Developed by Pistilli Lab. Credits: Alan Mizener, Stuart Clayton, Lauren Rentz."
+credits_label = ttk.Label(footer_frame, text=credits_text, state="readonly")
 credits_label.pack(side=tk.LEFT, padx=10)
 
 # Add Exit button
