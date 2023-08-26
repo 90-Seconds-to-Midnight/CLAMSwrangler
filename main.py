@@ -40,8 +40,12 @@ def browse_working_directory():
 
 
 def read_instructions(file_path):
-    with open(file_path, 'r') as f:
-        return f.read()
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            return f.read()
+    except UnicodeDecodeError as e:
+        print(f"An error occurred: {e}")
+        return ""
 
 
 def resource_path(relative_path):
