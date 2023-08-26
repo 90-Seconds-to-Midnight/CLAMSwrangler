@@ -1,14 +1,21 @@
-import tkinter as tk
-from tkinter import filedialog, font
+import os
+import platform
 import sys
+import time
+import tkinter as tk
+from datetime import datetime
+from shutil import move
+from tkinter import filedialog, font
+
+import pandas as pd
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
-import os
-import pandas as pd
-from datetime import datetime
-import time
-from shutil import move
-from clams_processing import clean_all_clams_data, trim_all_clams_data, process_directory, recombine_columns, reformat_csvs_in_directory
+
+from clams_processing import clean_all_clams_data, trim_all_clams_data, process_directory, recombine_columns, \
+    reformat_csvs_in_directory
+
+
+VERSION = "v0.9.0"
 
 
 class StdoutRedirect:
@@ -224,8 +231,14 @@ def main_process_clams_data():
 
 # Create the main window
 root = ttk.Window(themename="superhero")
-root.title("CLAMSwrangler")
+root.title(f"CLAMS Wrangler {VERSION}")
 root.minsize(width=1200, height=800)
+
+if platform.system() == "Windows":
+    root.iconbitmap('icon.ico')
+else:  # Assuming Linux or other platforms
+    icon_image = tk.PhotoImage(file='icon.png')
+    root.iconphoto(True, icon_image)
 
 # Get the default font
 default_font = font.nametofont("TkDefaultFont")
@@ -238,7 +251,7 @@ header_frame = ttk.Frame(root)
 header_frame.pack(fill=tk.X)
 
 # Add a logo (replace 'logo.png' with the path to your logo image)
-logo_image = tk.PhotoImage(file='./assets/logo.png')
+logo_image = tk.PhotoImage(file='logo.png')
 logo_label = ttk.Label(header_frame, image=logo_image)
 logo_label.pack(side=tk.TOP, pady=10)
 
@@ -267,42 +280,43 @@ directory_path_label.grid(row=0, column=0, sticky=W, padx=2, pady=2)
 browse_button = ttk.Button(input_frame, text="Browse", width=10, command=browse_working_directory)
 browse_button.grid(row=0, column=2, sticky=E, padx=2, pady=2)
 directory_path_entry = ttk.Entry(input_frame, width=50)
-directory_path_entry.grid(row=0, column=1, sticky=E, padx=2, pady=2)
+directory_path_entry.grid(row=0, column=1, sticky=EW, padx=2, pady=2)
 
 trim_hours_label = ttk.Label(input_frame, text="Trim Hours:")
-trim_hours_label.grid(row=1, column=0, sticky=W, padx=2, pady=2)
+trim_hours_label.grid(row=1, column=0, sticky=EW, padx=2, pady=2)
 start_cycle_var = tk.StringVar()
-start_cycle_dropdown = ttk.Combobox(input_frame, textvariable=start_cycle_var, values=["Start Light", "Start Dark"], width=8, state="readonly")
-start_cycle_dropdown.grid(row=1, column=2, sticky=E, padx=1, pady=2)
+start_cycle_dropdown = ttk.Combobox(input_frame, textvariable=start_cycle_var, values=["Start Light", "Start Dark"],
+                                    width=8, state="readonly")
+start_cycle_dropdown.grid(row=1, column=2, sticky=EW, padx=1, pady=2)
 trim_hours_entry = ttk.Entry(input_frame, width=50)
-trim_hours_entry.grid(row=1, column=1, sticky=E, padx=2, pady=2)
+trim_hours_entry.grid(row=1, column=1, sticky=EW, padx=2, pady=2)
 
 keep_hours_label = ttk.Label(input_frame, text="Keep Hours:")
-keep_hours_label.grid(row=2, column=0, sticky=W, padx=2, pady=2)
+keep_hours_label.grid(row=2, column=0, sticky=EW, padx=2, pady=2)
 keep_hours_entry = ttk.Entry(input_frame, width=50)
-keep_hours_entry.grid(row=2, column=1, sticky=E, padx=2, pady=2)
+keep_hours_entry.grid(row=2, column=1, sticky=EW, padx=2, pady=2)
 
 bin_hours_label = ttk.Label(input_frame, text="Bin Hours:")
-bin_hours_label.grid(row=3, column=0, sticky=W, padx=2, pady=2)
+bin_hours_label.grid(row=3, column=0, sticky=EW, padx=2, pady=2)
 bin_hours_entry = ttk.Entry(input_frame, width=50)
-bin_hours_entry.grid(row=3, column=1, sticky=E, padx=2, pady=2)
+bin_hours_entry.grid(row=3, column=1, sticky=EW, padx=2, pady=2)
 
 config_file_label = ttk.Label(input_frame, text="Config File:")
-config_file_label.grid(row=4, column=0, sticky=W, padx=2, pady=2)
+config_file_label.grid(row=4, column=0, sticky=EW, padx=2, pady=2)
 btn_browse_config = ttk.Button(input_frame, text="Browse", width=10, command=browse_config_file)
-btn_browse_config.grid(row=4, column=2, sticky=E, padx=2, pady= 2)
+btn_browse_config.grid(row=4, column=2, sticky=EW, padx=2, pady= 2)
 config_file_entry = ttk.Entry(input_frame, width=50)
-config_file_entry.grid(row=4, column=1, sticky=E, padx=2, pady=2)
+config_file_entry.grid(row=4, column=1, sticky=EW, padx=2, pady=2)
 
 label_id = ttk.Label(input_frame, text="ID:")
-label_id.grid(row=5, column=0, sticky=W, padx=2, pady=2)
+label_id.grid(row=5, column=0, sticky=EW, padx=2, pady=2)
 entry_id = ttk.Entry(input_frame, width=50)
-entry_id.grid(row=5, column=1, sticky=E, padx=2, pady=2)
+entry_id.grid(row=5, column=1, sticky=EW, padx=2, pady=2)
 
 label_group_label = ttk.Label(input_frame, text="Group Label:")
-label_group_label.grid(row=6, column=0, sticky=W, padx=2, pady=2)
+label_group_label.grid(row=6, column=0, sticky=EW, padx=2, pady=2)
 entry_group_label = ttk.Entry(input_frame, width=50)
-entry_group_label.grid(row=6, column=1, sticky=E, padx=2, pady=2)
+entry_group_label.grid(row=6, column=1, sticky=EW, padx=2, pady=2)
 
 # Add "Add Label" button
 btn_add_config = ttk.Button(input_frame, text="Add Label",
@@ -337,7 +351,8 @@ footer_frame = ttk.Frame(root)
 footer_frame.pack(fill=tk.X, side=tk.BOTTOM, pady=5)
 
 # Add credits text
-credits_text = "Version 0.8.0-beta. Developed by Pistilli Lab. Credits: Alan Mizener, Stuart Clayton, Lauren Rentz."
+credits_text = (f"{VERSION} Developed by Pistilli Lab. Credits: Alan Mizener, Stuart Clayton, Lauren Rentz. For "
+                f"updates visit github.com/PistilliLab")
 credits_label = ttk.Label(footer_frame, text=credits_text, state="readonly")
 credits_label.pack(side=tk.LEFT, padx=10)
 
