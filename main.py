@@ -249,9 +249,9 @@ root.title(f"CLAMS Wrangler {VERSION}")
 root.minsize(width=1400, height=1000)
 
 if platform.system() == "Windows":
-    root.iconbitmap('icon.ico')
+    root.iconbitmap(resource_path('logo.ico'))
 else:  # Assuming Linux or other platforms
-    icon_image = tk.PhotoImage(file='icon.png')
+    icon_image = tk.PhotoImage(file=resource_path('icon.png'))
     root.iconphoto(True, icon_image)
 
 # Get the default font
@@ -281,7 +281,7 @@ instructions_frame.grid(row=0, column=0, padx=10, pady=10)
 
 instructions_text = tk.Text(instructions_frame, wrap=tk.WORD, width=60, height=40)
 instructions_text.pack()
-instructions = read_instructions("instructions.txt")  # read in using read_instructions function at top
+instructions = read_instructions(resource_path('instructions.txt'))  # read in using read_instructions function at top
 instructions_text.insert(tk.END, instructions)
 instructions_text.config(state=tk.DISABLED)  # prevent editing
 
