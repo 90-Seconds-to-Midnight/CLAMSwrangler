@@ -252,11 +252,18 @@ root = ttk.Window(themename="superhero")
 root.title(f"CLAMS Wrangler {VERSION}")
 root.minsize(width=1400, height=1000)
 
-if platform.system() == "Windows":
+# error handling for not finding ico file on Windows
+if os.path.exists(resource_path('logo.ico')) and platform.system() == "Windows":
     root.iconbitmap(resource_path('logo.ico'))
-else:  # Assuming Linux or other platforms
+else:
+    print("ICO file not found")
+
+# for linux and Darwin
+if os.path.exists(resource_path('icon.png')):
     icon_image = tk.PhotoImage(file=resource_path('icon.png'))
     root.iconphoto(True, icon_image)
+else:
+    print("PNG file not found")
 
 # Get the default font
 default_font = font.nametofont("TkDefaultFont")
