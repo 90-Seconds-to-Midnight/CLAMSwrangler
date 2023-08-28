@@ -24,4 +24,4 @@ If you want to build the program from source, follow the directions [here](https
 # Credits
 Conceptualized and developed by: [Stuart Clayton](https://github.com/sclayton33), [Alan Mizener](https://github.com/admizener), [Lauren Rentz]()
 
-App icon is adapted from "Clams CLAM Icon" by Christopher Downer (https://www.iconarchive.com/show/cryptocurrency-flat-icons-by-cjdowner/Clams-CLAM-icon.html) under the CC0 1.0 license (https://creativecommons.org/publicdomain/zero/1.0/)
+App icon is adapted from ["Clams CLAM Icon"](https://www.iconarchive.com/show/cryptocurrency-flat-icons-by-cjdowner/Clams-CLAM-icon.html) by [Christopher Downer](https://github.com/cjdowner) under the [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) license.
