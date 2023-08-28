@@ -253,14 +253,21 @@ root.title(f"CLAMS Wrangler {VERSION}")
 root.minsize(width=1400, height=1000)
 
 # error handling for not finding ico file on Windows
-if os.path.exists(resource_path('logo.ico')) and platform.system() == "Windows":
-    root.iconbitmap(resource_path('logo.ico'))
+if os.path.exists(resource_path('CLAMS_icon.ico')) and platform.system() == "Windows":
+    root.iconbitmap(resource_path('CLAMS_icon.ico'))
 else:
     print("ICO file not found")
 
-# for linux and Darwin
-if os.path.exists(resource_path('icon.png')):
-    icon_image = tk.PhotoImage(file=resource_path('icon.png'))
+# for macOS
+if os.path.exists(resource_path('CLAMS_icon.png')) and platform.system() == "Darwin":
+    mac_icon = tk.PhotoImage(file=resource_path('CLAMS_icon.png'))
+    root.iconphoto(True, mac_icon)
+else:
+    print("PNG file not found")
+
+# for linux
+if os.path.exists(resource_path('CLAMS_icon.png')):
+    icon_image = tk.PhotoImage(file=resource_path('CLAMS_icon.png'))
     root.iconphoto(True, icon_image)
 else:
     print("PNG file not found")
