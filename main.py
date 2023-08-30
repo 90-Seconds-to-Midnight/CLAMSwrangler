@@ -15,7 +15,7 @@ from clams_processing import clean_all_clams_data, trim_all_clams_data, process_
     reformat_csvs_in_directory
 
 
-VERSION = "v1.0.0"
+VERSION = "v1.0.1"
 
 
 class StdoutRedirect:
@@ -24,9 +24,18 @@ class StdoutRedirect:
         self._stdout = sys.stdout
 
     def write(self, message):
-        self.text_widget.insert(tk.END, message)
-        self.text_widget.see(tk.END)  # Scroll to the end
-        self._stdout.write(message)
+        original_stdout = sys.stdout
+        sys.stdout = self._stdout
+        try:
+            self.text_widget.insert(tk.END, message)
+            self.text_widget.see(tk.END)  # Scroll to the end
+            self._stdout.write(message)
+            self.text_widget.see(tk.END)  # Scroll to the end
+            self._stdout.flush()  # Flush the buffer
+        except Exception as e:
+            print(f"An exception occurred: {e}")
+        finally:
+            sys.stdout = original_stdout
 
     def flush(self):
         self._stdout.flush()
@@ -319,6 +328,7 @@ trim_hours_label.grid(row=1, column=0, sticky=EW, padx=2, pady=2)
 start_cycle_var = tk.StringVar()
 start_cycle_dropdown = ttk.Combobox(input_frame, textvariable=start_cycle_var, values=["Start Light", "Start Dark"],
                                     width=8, state="readonly")
+start_cycle_var.set("Start Light")
 start_cycle_dropdown.grid(row=1, column=2, sticky=EW, padx=1, pady=2)
 trim_hours_entry = ttk.Entry(input_frame, width=75)
 trim_hours_entry.grid(row=1, column=1, sticky=EW, padx=2, pady=2)
