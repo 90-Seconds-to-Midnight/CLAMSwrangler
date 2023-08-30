@@ -3,19 +3,20 @@ import platform
 import sys
 import time
 import tkinter as tk
+import webbrowser
 from datetime import datetime
 from shutil import move
 from tkinter import filedialog, font
 
 import pandas as pd
+import requests
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 
 from clams_processing import clean_all_clams_data, trim_all_clams_data, process_directory, recombine_columns, \
     reformat_csvs_in_directory
 
-
-VERSION = "v1.0.1"
+VERSION = "v1.0.2"
 
 
 class StdoutRedirect:
@@ -39,6 +40,26 @@ class StdoutRedirect:
 
     def flush(self):
         self._stdout.flush()
+
+
+def check_for_update():
+    current_version = VERSION
+    repo_owner = 'PistilliLab'
+    repo_name = 'CLAMSwrangler'  # Replace with your actual repo name
+    url = f'https://api.github.com/repos/{repo_owner}/{repo_name}/releases/latest'
+
+    response = requests.get(url)
+    if response.status_code == 200:
+        latest_release = response.json()
+        latest_version = latest_release['tag_name']
+
+        if latest_version != current_version:
+            print(f"New version {latest_version} is available.")
+            webbrowser.open(latest_release['html_url'])
+        else:
+            output_text.insert(tk.END, "\nNo updates available, you're on the latest version! Have fun wranglin'!")
+    else:
+        print("Could not check for updates.")
 
 
 def browse_working_directory():
@@ -393,13 +414,18 @@ footer_frame = ttk.Frame(root)
 footer_frame.pack(fill=tk.X, side=tk.BOTTOM, pady=5)
 
 # Add credits text
-credits_text = (f"{VERSION} Developed by the Pistilli Lab. Credits: Alan Mizener, Stuart Clayton, Lauren Rentz. For "
-                f"updates visit github.com/PistilliLab")
+credits_text = (f"{VERSION} Developed by the Pistilli Lab. Credits: Alan Mizener, Stuart Clayton, Lauren Rentz. "
+                f"Visit github.com/PistilliLab")
 credits_label = ttk.Label(footer_frame, text=credits_text, state="readonly")
 credits_label.pack(side=tk.LEFT, padx=10)
 
 # Add Exit button
 exit_button = ttk.Button(footer_frame, text="Exit", command=root.quit, bootstyle=DANGER)
 exit_button.pack(side=tk.RIGHT, padx=10)
+
+# Add "Check for Updates" button
+update_button = ttk.Button(footer_frame, text="Check for Updates", command=check_for_update)
+update_button.pack(side=tk.RIGHT, padx=10)
+
 
 root.mainloop()
