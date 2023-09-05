@@ -6,7 +6,7 @@ import tkinter as tk
 import webbrowser
 from datetime import datetime
 from shutil import move
-from tkinter import filedialog, font
+from tkinter import filedialog, font, messagebox
 
 import pandas as pd
 import requests
@@ -16,7 +16,7 @@ from ttkbootstrap.constants import *
 from clams_processing import clean_all_clams_data, trim_all_clams_data, process_directory, recombine_columns, \
     reformat_csvs_in_directory
 
-VERSION = "v1.0.2"
+VERSION = "v1.0.3"
 
 
 class StdoutRedirect:
@@ -54,10 +54,13 @@ def check_for_update():
         latest_version = latest_release['tag_name']
 
         if latest_version != current_version:
-            print(f"New version {latest_version} is available.")
-            webbrowser.open(latest_release['html_url'])
+            new_version = messagebox.askyesno('Update Available',
+                                              f"CLAMS Wrangler {latest_version} is available. Update?")
+            if new_version is True:
+                webbrowser.open(latest_release['html_url'])
         else:
-            output_text.insert(tk.END, "\nNo updates available, you're on the latest version! Have fun wranglin'!")
+            messagebox.showinfo('No Update Available',
+                                f"You are using the latest version of CLAMS Wrangler! ({VERSION})")
     else:
         print("Could not check for updates.")
 
