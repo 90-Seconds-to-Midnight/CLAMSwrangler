@@ -178,6 +178,8 @@ def log_user_input_and_output(input_values, output_text_content):
     log_file_path = os.path.join(directory_path_entry.get(), 'config', f'log_{timestamp}.txt')
 
     with open(log_file_path, 'w') as log_file:
+        # Write software version to the log file
+        log_file.write(f"Data processed using CLAMS Wrangler {VERSION} on {timestamp}\n\n")
         # Write user input values to the log file
         log_file.write("User Input Values:\n")
         for key, value in input_values.items():
