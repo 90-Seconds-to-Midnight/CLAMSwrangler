@@ -332,11 +332,23 @@ main_frame.pack(fill=tk.BOTH, expand=True)
 instructions_frame = ttk.Frame(main_frame)
 instructions_frame.grid(row=0, column=0, padx=10, pady=10)
 
-instructions_text = tk.Text(instructions_frame, wrap=tk.WORD, width=60, height=40)
-instructions_text.pack()
+instructions_label = ttk.Label(instructions_frame, text="Instructions")
+instructions_label.grid(row=0, column=0, pady=10)
+instructions_text = tk.Text(instructions_frame, wrap=tk.WORD, width=60, height=30)
+# instructions_text.pack()
+instructions_text.grid(row=1, column=0)
 instructions = read_instructions(resource_path('instructions.txt'))  # read in using read_instructions function at top
 instructions_text.insert(tk.END, instructions)
 instructions_text.config(state=tk.DISABLED)  # prevent editing
+
+# Add citation label and text
+citation_label = ttk.Label(instructions_frame, text="Please cite this software")
+citation_label.grid(row=2, column=0, pady=10)
+citation_text = tk.Text(instructions_frame, wrap=tk.WORD, width=60, height=5)
+citation_text.grid(row=3, column=0, pady=10)
+citation_text.insert(tk.END, f"Clayton, S. A., Mizener, A. D., & Rentz, L. E. (2023). CLAMS Wrangler ({VERSION}) "
+                             "[Computer software]. https://github.com/PistilliLab/CLAMSwrangler")
+citation_text.config(state=tk.DISABLED)
 
 # Defines frame for user input
 input_frame = ttk.Frame(main_frame)

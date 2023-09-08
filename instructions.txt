@@ -1,5 +1,3 @@
-Instructions:
-
 1. Enter the path to the directory containing all the .csv CLAMS data files you wish to process.
 2. Enter the number of hours you wish to trim from the beginning of the data and the light cycle to start in.
         Somewhere between 1-6 hours for most runs, or 0 if a very short run.
