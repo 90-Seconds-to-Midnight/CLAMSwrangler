@@ -202,11 +202,66 @@ def main_process_clams_data():
     Returns:
     Nothing. Prints progress and saves processed files to respective directories.
     """
-    directory_path = directory_path_entry.get()
-    trim_hours = int(trim_hours_entry.get())
+    # handle directory errors
+    try:
+        directory_path = directory_path_entry.get()
+
+        if not directory_path:
+            output_text.insert(tk.END, "Directory path is not provided!\n")
+            return
+        elif not os.path.isdir(directory_path):
+            output_text.insert(tk.END, "Provided path is not a valid directory!\n")
+            return
+
+    except ValueError as e:
+        output_text.insert(tk.END, f"Error: {str(e)}\n")
+
+    # handle trim hour errors
+    try:
+        trim_hours_str = trim_hours_entry.get()
+
+        if not trim_hours_str:
+            output_text.insert(tk.END, "Trim hours value is not provided!\n")
+            return
+
+        trim_hours = int(trim_hours_str)
+
+    except ValueError as e:
+        output_text.insert(tk.END, f"Error: {str(e)} Value must be a whole integer!\n")
+
+    # this has a default value and can not be modified, so no need for error handling
     start_dark = start_cycle_var.get() == "Start Dark"
-    keep_hours = int(keep_hours_entry.get())
-    bin_hours = int(bin_hours_entry.get())
+
+    # handle keep hours errors
+    try:
+        keep_hours_str = keep_hours_entry.get()
+
+        if not keep_hours_str:
+            output_text.insert(tk.END, "Keep hours value is not provided!\n")
+            return
+
+        keep_hours = int(keep_hours_str)
+
+    except ValueError as e:
+        output_text.insert(tk.END, f"Error: {str(e)} Value must be a whole integer!\n")
+
+    # handle bin hours errors
+    try:
+        bin_hours_str = bin_hours_entry.get()
+
+        if not bin_hours_str:
+            output_text.insert(tk.END, "Bin hours value is not provided!\n")
+            return
+
+        bin_hours = int(bin_hours_str)
+
+        # check if factor of 12
+        if bin_hours % 12 != 0:
+            output_text.insert(tk.END, f"Bin hours must be a factor of 12!\n")
+            return
+
+    except ValueError as e:
+        output_text.insert(tk.END, f"Error: {str(e)} Value must be a whole integer!\n")
 
     # Redirect stdout to the output_text widget
     original_stdout = sys.stdout
