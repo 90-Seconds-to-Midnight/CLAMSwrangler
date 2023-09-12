@@ -16,7 +16,7 @@ from ttkbootstrap.constants import *
 from clams_processing import clean_all_clams_data, trim_all_clams_data, process_directory, recombine_columns, \
     reformat_csvs_in_directory
 
-VERSION = "v1.0.3"
+VERSION = "v1.0.4"
 
 
 class StdoutRedirect:
@@ -408,6 +408,7 @@ citation_text.config(state=tk.DISABLED)
 # Defines frame for user input
 input_frame = ttk.Frame(main_frame)
 input_frame.grid(row=0, column=1, padx=10, pady=10)
+input_frame.grid_columnconfigure(1, weight=5)  # fill available space
 
 directory_path_label = ttk.Label(input_frame, text="Directory Path:")
 directory_path_label.grid(row=0, column=0, sticky=W, padx=2, pady=2)
