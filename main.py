@@ -256,7 +256,7 @@ def main_process_clams_data():
         bin_hours = int(bin_hours_str)
 
         # check if factor of 12
-        if bin_hours % 12 != 0:
+        if 12 % bin_hours != 0:
             output_text.insert(tk.END, f"Bin hours must be a factor of 12!\n")
             return
 
