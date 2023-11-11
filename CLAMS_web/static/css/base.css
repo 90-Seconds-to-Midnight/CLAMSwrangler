@@ -1,6 +1,4 @@
-html, body {
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    background-color: #0f66bd; /* Replace with your desired color */
+body {
+    color: #ffffff; /* Replace with your desired color */
 }
+
