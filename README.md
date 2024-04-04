@@ -31,3 +31,12 @@ If you use this program, please cite the repository as described below or visit 
 
 # Credits
 App icon is adapted from ["Clams CLAM Icon"](https://www.iconarchive.com/show/cryptocurrency-flat-icons-by-cjdowner/Clams-CLAM-icon.html) by [Christopher Downer](https://github.com/cjdowner) under the [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) license.
+
+# Disclaimer
+This software is distributed under the terms of the GNU General Public License v3 (GPL v3), which is included with the software. The software is provided "as is," without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, and noninfringement. In no event shall the authors or copyright holders be liable for any claim, damages, or other liability, whether in an action of contract, tort, or otherwise, arising from, out of, or in connection with the software or the use or other dealings in the software.
+
+The software is provided with the hope that it will be useful but WITHOUT ANY WARRANTY. It may contain errors and is not intended for use in any medical, life-saving, or life-sustaining systems, or for any other mission-critical application in which the failure of the software could lead to personal injury or death.
+
+The GPL v3 license gives you the freedom to use, modify, and redistribute the software under certain conditions. However, it does not provide any warranty or guarantee of accuracy. You are solely responsible for determining the appropriateness of using or redistributing the software and assume any risks associated with your exercise of permissions under this license.
+
+By using this software, you agree to comply with the terms and conditions of the GPL v3 license. If you do not agree with the terms of this license, do not use or redistribute the software.
